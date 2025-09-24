@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>You Can Scroll Widget</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap');
+
+      .youcan-widget {
+        --font-size-min: 14;
+        --font-size-max: 20;
+        --font-ratio-min: 1.1;
+        --font-ratio-max: 1.33;
+        --font-width-min: 375;
+        --font-width-max: 1500;
+        --start: 0;
+        --end: 360;
+        --hue: var(--start);
+        --chroma: 0;
+        --lightness: 65%;
+        --base-chroma: 0.3;
+        color-scheme: light dark;
+        font-family: 'Geist', 'SF Pro Text', 'SF Pro Icons', 'AOS Icons',
+          'Helvetica Neue', Helvetica, Arial, sans-serif, system-ui;
+        min-height: 100vh;
+        overflow: auto;
+        background: light-dark(white, black);
+        display: grid;
+        place-items: center;
+        position: relative;
+        padding: clamp(2rem, 6vh, 6rem) clamp(1.5rem, 4vw, 5rem);
+        gap: clamp(3rem, 8vh, 6rem);
+      }
+
+      .youcan-widget[data-theme='light'] {
+        color-scheme: light only;
+        --lightness: 65%;
+      }
+
+      .youcan-widget[data-theme='dark'] {
+        color-scheme: dark only;
+        --lightness: 75%;
+      }
+
+      .youcan-widget[data-theme='system'] {
+        --lightness: 65%;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .youcan-widget[data-theme='system'] {
+          --lightness: 75%;
+        }
+      }
+
+      .youcan-widget *,
+      .youcan-widget *::before,
+      .youcan-widget *::after {
+        box-sizing: border-box;
+      }
+
+      .youcan-widget::before {
+        --size: 45px;
+        --line: color-mix(in hsl, canvasText, transparent 70%);
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+              90deg,
+              var(--line) 1px,
+              transparent 1px var(--size)
+            )
+            50% 50% / var(--size) var(--size),
+          linear-gradient(var(--line) 1px, transparent 1px var(--size)) 50% 50% /
+            var(--size) var(--size);
+        mask: linear-gradient(-20deg, transparent 50%, white);
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .youcan-widget .fluid {
+        --fluid-min: calc(
+          var(--font-size-min) * pow(var(--font-ratio-min), var(--font-level, 0))
+        );
+        --fluid-max: calc(
+          var(--font-size-max) * pow(var(--font-ratio-max), var(--font-level, 0))
+        );
+        --fluid-preferred: calc(
+          (var(--fluid-max) - var(--fluid-min)) /
+            (var(--font-width-max) - var(--font-width-min))
+        );
+        --fluid-type: clamp(
+          (var(--fluid-min) / 16) * 1rem,
+          ((var(--fluid-min) / 16) * 1rem) -
+            (((var(--fluid-preferred) * var(--font-width-min)) / 16) * 1rem) +
+            (var(--fluid-preferred) * var(--variable-unit, 100vi)),
+          (var(--fluid-max) / 16) * 1rem
+        );
+        font-size: var(--fluid-type);
+      }
+
+      .youcan-widget header,
+      .youcan-widget main,
+      .youcan-widget footer {
+        width: min(100%, 1200px);
+        position: relative;
+        z-index: 1;
+      }
+
+      .youcan-widget header {
+        min-height: min(100vh, 800px);
+        display: flex;
+        align-items: center;
+        padding-inline: clamp(1.5rem, 4vw, 5rem);
+      }
+
+      .youcan-widget main {
+        width: min(100%, 1400px);
+        display: flex;
+        flex-direction: column;
+        gap: 10vh;
+        padding-inline: clamp(1.5rem, 4vw, 5rem);
+      }
+
+      .youcan-widget footer {
+        padding: 2rem clamp(1.5rem, 4vw, 5rem);
+        opacity: 0.5;
+        text-align: center;
+      }
+
+      .youcan-widget h1 {
+        --font-size-min: 24;
+        --font-level: 8;
+        text-wrap: pretty;
+        line-height: 0.8;
+        margin: 0;
+        background: linear-gradient(
+          canvasText 60%,
+          color-mix(in oklch, canvas, canvasText)
+        );
+        background-clip: text;
+        color: transparent;
+      }
+
+      .youcan-widget main > section:first-of-type {
+        --font-level: 6;
+        display: flex;
+        align-items: flex-start;
+        gap: clamp(1.5rem, 5vw, 5rem);
+        padding-left: clamp(1rem, 3vw, 5rem);
+        line-height: 1.25;
+        width: 100%;
+      }
+
+      .youcan-widget main > section:last-of-type {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-inline: clamp(1.5rem, 4vw, 5rem);
+      }
+
+      .youcan-widget main > section:first-of-type h2 {
+        position: sticky;
+        top: calc(50% - 0.5lh);
+        font-size: inherit;
+        margin: 0;
+        display: inline-block;
+        height: fit-content;
+        font-weight: 600;
+        background: linear-gradient(
+          canvasText 50%,
+          color-mix(in oklch, canvas, canvasText 25%)
+        );
+        background-clip: text;
+        color: transparent;
+      }
+
+      .youcan-widget main > section:last-of-type h2 {
+        --font-level: 6;
+        margin: 0;
+        font-weight: 600;
+        background: linear-gradient(
+          canvasText 50%,
+          color-mix(in oklch, canvas, canvasText 25%)
+        );
+        background-clip: text;
+        color: transparent;
+      }
+
+      .youcan-widget ul {
+        font-weight: 600;
+        padding: 0;
+        margin: 0;
+        list-style-type: none;
+        display: flex;
+        flex-direction: column;
+        gap: clamp(1.5rem, 5vh, 3rem);
+      }
+
+      .youcan-widget[data-snap='true'] ul li {
+        scroll-snap-align: center;
+      }
+
+      .youcan-widget ul li {
+        margin: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .youcan-widget ul {
+        --step: calc((var(--end) - var(--start)) / (var(--count) - 1));
+      }
+
+      .youcan-widget ul li:not(:last-of-type) {
+        color: oklch(
+          var(--lightness) var(--base-chroma)
+            calc(var(--start) + (var(--step) * var(--i)))
+        );
+      }
+
+      .youcan-widget ul li:last-of-type {
+        background: linear-gradient(
+          canvasText 50%,
+          color-mix(in oklch, canvas, canvasText 25%)
+        );
+        background-clip: text;
+        color: transparent;
+      }
+
+      .youcan-widget[data-sync-scrollbar='true'] {
+        scrollbar-color: oklch(var(--lightness) var(--chroma) var(--hue)) transparent;
+      }
+
+      @supports (animation-timeline: scroll()) and (animation-range: 0% 100%) {
+        .youcan-widget[data-sync-scrollbar='true'][data-animate='true'] {
+          timeline-scope: --list;
+          scrollbar-color: oklch(var(--lightness) var(--chroma, 0) var(--hue))
+            transparent;
+          animation-name: change, chroma-on, chroma-off;
+          animation-fill-mode: both;
+          animation-timing-function: linear;
+          animation-range: entry 50% exit 50%, entry 40% entry 50%,
+            exit 30% exit 40%;
+          animation-timeline: --list;
+        }
+
+        .youcan-widget[data-animate='true'] ul {
+          view-timeline: --list;
+        }
+
+        .youcan-widget[data-animate='true'] ul li {
+          opacity: 0.2;
+          animation-name: brighten;
+          animation-fill-mode: both;
+          animation-timing-function: linear;
+          animation-range: cover calc(50% - 1lh) calc(50% + 1lh);
+          animation-timeline: view();
+        }
+
+        .youcan-widget[data-animate='true'] ul li:first-of-type {
+          --start-opacity: 1;
+        }
+
+        .youcan-widget[data-animate='true'] ul li:last-of-type {
+          --brightness: 1;
+          --end-opacity: 1;
+        }
+
+        @keyframes brighten {
+          0% {
+            opacity: var(--start-opacity, 0.2);
+          }
+          50% {
+            opacity: 1;
+            filter: brightness(var(--brightness, 1.2));
+          }
+          100% {
+            opacity: var(--end-opacity, 0.2);
+          }
+        }
+
+        @keyframes change {
+          to {
+            --hue: var(--end);
+          }
+        }
+
+        @keyframes chroma-on {
+          to {
+            --chroma: 0.3;
+          }
+        }
+
+        @keyframes chroma-off {
+          to {
+            --chroma: 0;
+          }
+        }
+      }
+
+      .youcan-widget .bear-link {
+        color: canvasText;
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+        width: 48px;
+        aspect-ratio: 1;
+        display: grid;
+        place-items: center;
+        opacity: 0.8;
+        z-index: 2;
+      }
+
+      .youcan-widget .bear-link:hover,
+      .youcan-widget .bear-link:focus-visible {
+        opacity: 1;
+      }
+
+      .youcan-widget .bear-link svg {
+        width: 75%;
+      }
+
+      .youcan-widget .youcan-widget__controls {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        z-index: 3;
+      }
+
+      .youcan-widget[data-debug='true'] li {
+        outline: 0.05em dashed currentColor;
+      }
+
+      .youcan-widget[data-debug='true'] :is(h2, li:last-of-type) {
+        outline: 0.05em dashed canvasText;
+      }
+
+      .youcan-widget[data-snap='true'] ul {
+        scroll-snap-type: y proximity;
+      }
+
+      .youcan-widget .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border-width: 0;
+      }
+
+      .youcan-widget .tp-dfwv {
+        position: static;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      class="youcan-widget"
+      data-you-can-widget
+      data-theme="system"
+      data-sync-scrollbar="true"
+      data-animate="true"
+      data-snap="true"
+      data-debug="false"
+    >
+      <div class="youcan-widget__controls" data-pane></div>
+      <a
+        class="bear-link"
+        href="https://twitter.com/intent/follow?screen_name=jh3yy"
+        target="_blank"
+        rel="noreferrer noopener"
+      >
+        <svg
+          class="w-9"
+          viewBox="0 0 969 955"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <circle
+            cx="161.191"
+            cy="320.191"
+            r="133.191"
+            stroke="currentColor"
+            stroke-width="20"
+          ></circle>
+          <circle
+            cx="806.809"
+            cy="320.191"
+            r="133.191"
+            stroke="currentColor"
+            stroke-width="20"
+          ></circle>
+          <circle cx="695.019" cy="587.733" r="31.4016" fill="currentColor"></circle>
+          <circle cx="272.981" cy="587.733" r="31.4016" fill="currentColor"></circle>
+          <path
+            d="M564.388 712.083C564.388 743.994 526.035 779.911 483.372 779.911C440.709 779.911 402.356 743.994 402.356 712.083C402.356 680.173 440.709 664.353 483.372 664.353C526.035 664.353 564.388 680.173 564.388 712.083Z"
+            fill="currentColor"
+          ></path>
+          <rect x="310.42" y="448.31" width="343.468" height="51.4986" fill="#FF1E1E"></rect>
+          <path
+            fill-rule="evenodd"
+            clip-rule="evenodd"
+            d="M745.643 288.24C815.368 344.185 854.539 432.623 854.539 511.741H614.938V454.652C614.938 433.113 597.477 415.652 575.938 415.652H388.37C366.831 415.652 349.37 433.113 349.37 454.652V511.741L110.949 511.741C110.949 432.623 150.12 344.185 219.845 288.24C289.57 232.295 384.138 200.865 482.744 200.865C581.35 200.865 675.918 232.295 745.643 288.24Z"
+            fill="currentColor"
+          ></path>
+        </svg>
+      </a>
+      <header>
+        <h1 class="fluid">you can<br />scroll.</h1>
+      </header>
+      <main>
+        <section class="content fluid">
+          <h2>
+            <span aria-hidden="true">you can&nbsp;</span>
+            <span class="sr-only">you can ship things.</span>
+          </h2>
+          <ul aria-hidden="true" style="--count: 22">
+            <li style="--i: 0">design.</li>
+            <li style="--i: 1">prototype.</li>
+            <li style="--i: 2">solve.</li>
+            <li style="--i: 3">build.</li>
+            <li style="--i: 4">develop.</li>
+            <li style="--i: 5">debug.</li>
+            <li style="--i: 6">learn.</li>
+            <li style="--i: 7">cook.</li>
+            <li style="--i: 8">ship.</li>
+            <li style="--i: 9">prompt.</li>
+            <li style="--i: 10">collaborate.</li>
+            <li style="--i: 11">create.</li>
+            <li style="--i: 12">inspire.</li>
+            <li style="--i: 13">follow.</li>
+            <li style="--i: 14">innovate.</li>
+            <li style="--i: 15">test.</li>
+            <li style="--i: 16">optimize.</li>
+            <li style="--i: 17">teach.</li>
+            <li style="--i: 18">visualize.</li>
+            <li style="--i: 19">transform.</li>
+            <li style="--i: 20">scale.</li>
+            <li style="--i: 21">do it.</li>
+          </ul>
+        </section>
+        <section>
+          <h2 class="fluid">fin.</h2>
+        </section>
+      </main>
+      <footer>ʕ⊙ᴥ⊙ʔ jh3yy &copy; 2024</footer>
+    </div>
+    <script type="module">
+      import { Pane } from 'https://cdn.skypack.dev/tweakpane@4.0.4';
+      import gsap from 'https://cdn.skypack.dev/gsap@3.12.0';
+      import ScrollTrigger from 'https://cdn.skypack.dev/gsap@3.12.0/ScrollTrigger';
+
+      const supportsScrollAnimations = CSS.supports(
+        '(animation-timeline: scroll()) and (animation-range: 0% 100%)'
+      );
+
+      const widgets = document.querySelectorAll('[data-you-can-widget]');
+
+      widgets.forEach((widget) => {
+        const config = {
+          theme: 'system',
+          animate: true,
+          snap: true,
+          start: gsap.utils.random(0, 100, 1),
+          end: gsap.utils.random(900, 1000, 1),
+          scroll: true,
+          debug: false,
+        };
+
+        const controlsContainer = widget.querySelector('[data-pane]') ?? widget;
+        const pane = new Pane({
+          title: 'Config',
+          expanded: false,
+          container: controlsContainer,
+        });
+
+        let items;
+        let scrollerScrub;
+        let dimmerScrub;
+        let chromaEntry;
+        let chromaExit;
+
+        const setTheme = () => {
+          if (config.theme === 'system') {
+            widget.dataset.theme = 'system';
+          } else {
+            widget.dataset.theme = config.theme;
+          }
+        };
+
+        const setDataFlags = () => {
+          widget.dataset.animate = String(config.animate);
+          widget.dataset.snap = String(config.snap);
+          widget.dataset.syncScrollbar = String(config.scroll);
+          widget.dataset.debug = String(config.debug);
+        };
+
+        const update = () => {
+          setTheme();
+          setDataFlags();
+
+          widget.style.setProperty('--start', config.start);
+          widget.style.setProperty('--hue', config.start);
+          widget.style.setProperty('--end', config.end);
+
+          if (!config.animate && !supportsScrollAnimations) {
+            chromaEntry?.scrollTrigger?.disable(true, false);
+            chromaExit?.scrollTrigger?.disable(true, false);
+            dimmerScrub?.disable(true, false);
+            scrollerScrub?.disable(true, false);
+            gsap.set(items, { opacity: 1 });
+            gsap.set(widget, { '--chroma': 0 });
+          } else if (!config.animate) {
+            Array.from(widget.querySelectorAll('li')).forEach((li, index) => {
+              li.style.opacity = index === 0 ? '1' : '0.2';
+            });
+          } else if (!supportsScrollAnimations) {
+            gsap.set(items, { opacity: (i) => (i !== 0 ? 0.2 : 1) });
+            dimmerScrub?.enable(true, true);
+            scrollerScrub?.enable(true, true);
+            chromaEntry?.scrollTrigger?.enable(true, true);
+            chromaExit?.scrollTrigger?.enable(true, true);
+          }
+        };
+
+        const documentForWidget = widget.ownerDocument;
+
+        const sync = (event) => {
+          const isThemeChange =
+            event?.target?.controller?.view?.labelElement?.innerText === 'Theme';
+
+          if (!documentForWidget.startViewTransition || !isThemeChange) {
+            update();
+            return;
+          }
+
+          documentForWidget.startViewTransition(() => update());
+        };
+
+        pane.addBinding(config, 'animate', { label: 'Animate' });
+        pane.addBinding(config, 'snap', { label: 'Snap' });
+        pane.addBinding(config, 'start', {
+          label: 'Hue Start',
+          min: 0,
+          max: 1000,
+          step: 1,
+        });
+        pane.addBinding(config, 'end', {
+          label: 'Hue End',
+          min: 0,
+          max: 1000,
+          step: 1,
+        });
+        pane.addBinding(config, 'scroll', { label: 'Scrollbar' });
+        pane.addBinding(config, 'debug', { label: 'Debug' });
+        pane.addBinding(config, 'theme', {
+          label: 'Theme',
+          options: {
+            System: 'system',
+            Light: 'light',
+            Dark: 'dark',
+          },
+        });
+
+        pane.on('change', sync);
+
+        if (!supportsScrollAnimations) {
+          gsap.registerPlugin(ScrollTrigger);
+
+          items = Array.from(widget.querySelectorAll('ul li'));
+
+          gsap.set(items, { opacity: (i) => (i !== 0 ? 0.2 : 1) });
+
+          const dimmer = gsap
+            .timeline({ paused: true })
+            .to(items.slice(1), {
+              opacity: 1,
+              stagger: 0.5,
+            })
+            .to(
+              items.slice(0, items.length - 1),
+              {
+                opacity: 0.2,
+                stagger: 0.5,
+              },
+              0
+            );
+
+          dimmerScrub = ScrollTrigger.create({
+            trigger: items[0],
+            endTrigger: items[items.length - 1],
+            start: 'center center',
+            end: 'center center',
+            animation: dimmer,
+            scrub: 0.2,
+            scroller: widget,
+          });
+
+          const scroller = gsap.timeline({ paused: true }).fromTo(
+            widget,
+            {
+              '--hue': config.start,
+            },
+            {
+              '--hue': config.end,
+              ease: 'none',
+            }
+          );
+
+          scrollerScrub = ScrollTrigger.create({
+            trigger: items[0],
+            endTrigger: items[items.length - 1],
+            start: 'center center',
+            end: 'center center',
+            animation: scroller,
+            scrub: 0.2,
+            scroller: widget,
+          });
+
+          chromaEntry = gsap.fromTo(
+            widget,
+            {
+              '--chroma': 0,
+            },
+            {
+              '--chroma': 0.3,
+              ease: 'none',
+              scrollTrigger: {
+                scrub: 0.2,
+                trigger: items[0],
+                start: 'center center+=40',
+                end: 'center center',
+                scroller: widget,
+              },
+            }
+          );
+
+          chromaExit = gsap.fromTo(
+            widget,
+            {
+              '--chroma': 0.3,
+            },
+            {
+              '--chroma': 0,
+              ease: 'none',
+              scrollTrigger: {
+                scrub: 0.2,
+                trigger: items[items.length - 2],
+                start: 'center center',
+                end: 'center center-=40',
+                scroller: widget,
+              },
+            }
+          );
+        }
+
+        update();
+      });
+    </script>
+  </body>
+</html>
